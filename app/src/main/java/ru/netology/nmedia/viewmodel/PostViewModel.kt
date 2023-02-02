@@ -30,18 +30,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val _postCreated = SingleLiveEvent<Unit>()
     val postCreated: LiveData<Unit>
         get() = _postCreated
-//    val refresh = SwipeRefreshLayout.OnRefreshListener {
-//        thread {
-//            try {
-//                refresh.
-//                val posts = repository.getAll()
-//                FeedModel(posts = posts, empty = posts.isEmpty(), refreshing = true)
-//            } catch (e: IOException) {
-//                FeedModel(error = true)
-//            }.also(_data::postValue)
-//            FeedModel(refreshing = false)
-//        }
-//    }
 
     init {
         loadPosts()
@@ -70,7 +58,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: IOException) {
                 FeedModel(error = true)
             }.also(_data::postValue)
-//            FeedModel(refreshing = false)
         }
     }
 
