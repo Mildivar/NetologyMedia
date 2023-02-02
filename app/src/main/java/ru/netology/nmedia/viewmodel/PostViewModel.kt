@@ -2,6 +2,8 @@ package ru.netology.nmedia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
@@ -43,6 +45,17 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 FeedModel(posts = posts, empty = posts.isEmpty())
             } catch (e: IOException) {
                 // Получена ошибка
+                FeedModel(error = true)
+            }.also(_data::postValue)
+        }
+    }
+
+    fun refreshPosts(){
+        thread {
+            try {
+                val posts = repository.getAll()
+                FeedModel(posts = posts, empty = posts.isEmpty(), refreshing = false)
+            } catch (e: IOException) {
                 FeedModel(error = true)
             }.also(_data::postValue)
         }
