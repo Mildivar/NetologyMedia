@@ -2,8 +2,6 @@ package ru.netology.nmedia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
@@ -36,37 +34,45 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun loadPosts() {
-        thread {
-            // Начинаем загрузку
-            _data.postValue(FeedModel(loading = true))
-            try {
-                // Данные успешно получены
-                val posts = repository.getAll()
-                FeedModel(posts = posts, empty = posts.isEmpty())
-            } catch (e: IOException) {
-                // Получена ошибка
-                FeedModel(error = true)
-            }.also(_data::postValue)
-        }
+        _data.value = (FeedModel(loading = true))
+        repository.getAll(object : PostRepository.Callback<List<Post>> {
+
+            override fun onSuccess(data: List<Post>) {
+                _data.postValue(FeedModel(posts = data, empty = data.isEmpty()))
+            }
+
+            override fun onError(e: Exception) {
+                _data.postValue(FeedModel(error = true))
+            }
+        })
     }
 
-    fun refreshPosts(){
-        thread {
-            try {
-                val posts = repository.getAll()
-                FeedModel(posts = posts, empty = posts.isEmpty(), refreshing = false)
-            } catch (e: IOException) {
-                FeedModel(error = true)
-            }.also(_data::postValue)
-        }
+    fun refreshPosts() {
+        repository.getAll(object : PostRepository.Callback<List<Post>> {
+
+            override fun onSuccess(data: List<Post>) {
+                _data.postValue(FeedModel(posts = data, empty = data.isEmpty()))
+            }
+
+            override fun onError(e: Exception) {
+                _data.postValue(FeedModel(error = true))
+            }
+        })
     }
 
     fun save() {
+            _data.value = (FeedModel(loading = true))
         edited.value?.let {
-            thread {
-                repository.save(it)
-                _postCreated.postValue(Unit)
-            }
+            repository.save(it, object : PostRepository.Callback<Post> {
+                override fun onSuccess(data: Post) {
+                    _postCreated.postValue(Unit)
+                }
+
+                override fun onError(e: Exception) {
+                    _data.postValue(FeedModel(error = true))
+                }
+
+            })
         }
         edited.value = empty
     }
@@ -84,51 +90,67 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun likeById(id: Long) {
-        thread {
-            val likedPost = repository.likeById(id)
-            _data.postValue(
-                _data.value?.posts.orEmpty().let {
-                    _data.value?.copy(
-                        posts = it
-                            .map { post ->
-                                if (post.id == id) likedPost else post
-                            }
+             repository.likeById(id,  object : PostRepository.Callback<Post>{
+                override fun onSuccess(data: Post) {
+                    _data.postValue(
+                        _data.value?.posts.orEmpty().let {
+                            _data.value?.copy(
+                                posts = it
+                                    .map { post ->
+                                        if (post.id == id) data else post
+                                    }
+                            )
+                        }
                     )
                 }
-            )
+
+                override fun onError(e: Exception) {
+                    _data.postValue(FeedModel(error = true))
+                }
+            })
+
         }
-    }
+
 
     fun unlikeById(id: Long) {
-        thread {
-            val unlikedPost = repository.unlikeById(id)
-            _data.postValue(
-                _data.value?.posts.orEmpty().let {
-                    _data.value?.copy(
-                        posts = it
-                            .map { post ->
-                                if (post.id == id) unlikedPost else post
-                            }
-                    )
-                }
-            )
-        }
+        repository.unlikeById(id,  object : PostRepository.Callback<Post>{
+            override fun onSuccess(data: Post) {
+                _data.postValue(
+                    _data.value?.posts.orEmpty().let {
+                        _data.value?.copy(
+                            posts = it
+                                .map { post ->
+                                    if (post.id == id) data else post
+                                }
+                        )
+                    }
+                )
+            }
+
+            override fun onError(e: Exception) {
+                _data.postValue(FeedModel(error = true))
+            }
+        })
     }
 
     fun removeById(id: Long) {
-        thread {
-            // Оптимистичная модель
-            val old = _data.value?.posts.orEmpty()
-            _data.postValue(
-                _data.value?.copy(posts = _data.value?.posts.orEmpty()
-                    .filter { it.id != id }
+        _data.value = (FeedModel(loading = true))
+        repository.removeById(id,object :PostRepository.Callback<Unit>{
+            override fun onSuccess(data: Unit) {
+                _data.postValue(
+                    _data.value?.copy(posts = _data.value?.posts.orEmpty()
+                        .filter { it.id != id }
+                    )
                 )
-            )
-            try {
-                repository.removeById(id)
-            } catch (e: IOException) {
+
+            }
+
+            override fun onError(e: Exception) {
+                val old = _data.value?.posts.orEmpty()
                 _data.postValue(_data.value?.copy(posts = old))
             }
-        }
+        })
+        refreshPosts()
+
     }
 }
