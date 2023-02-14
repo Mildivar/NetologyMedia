@@ -3,13 +3,17 @@ package ru.netology.nmedia.adapter
 import android.widget.ImageView
 import android.widget.PopupMenu
 import androidx.annotation.DrawableRes
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
+import ru.netology.nmedia.dto.AttachmentParams
+import ru.netology.nmedia.dto.AttachmentTypes
 import ru.netology.nmedia.dto.Post
 import utils.load
+import utils.loadImage
 
 class PostViewHolder(
     private val binding: CardPostBinding,
@@ -17,19 +21,24 @@ class PostViewHolder(
 ) : RecyclerView.ViewHolder(binding.root) {
 
 
-
-
     fun bind(post: Post) {
-        val url = "http://10.0.2.2:9999/avatars/${post.authorAvatar}"
+        val avatarUrl = "http://10.0.2.2:9999/avatars/${post.authorAvatar}"
+        val attachmentUrl = "http://10.0.2.2:9999/images/${post.attachment?.url}"
         binding.apply {
             author.text = post.author
-            avatar.load(url)
+            avatar.load(avatarUrl)
             published.text = post.published
             content.text = post.content
             // в адаптере
             like.isChecked = post.likedByMe
             like.text = "${post.likes}"
-
+            attachmentImage.let {
+                if ((post.attachment != null) && (post.attachment.type == AttachmentTypes.IMAGE)) {
+                    attachmentImage.isVisible = true
+                    it.loadImage(attachmentUrl)
+                }
+                else attachmentImage.isVisible = false
+            }
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.options_post)

@@ -19,3 +19,13 @@ fun ImageView.load(
         .error(fallback)
         .into(this)
 }
+
+fun ImageView.loadImage(
+    url: String,
+    timeOutMs: Int = 10000
+) {
+    Glide.with(this)
+        .load(url)
+        .timeout(timeOutMs)
+        .into(this)
+}
