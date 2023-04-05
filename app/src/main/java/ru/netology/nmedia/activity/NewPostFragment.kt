@@ -40,7 +40,7 @@ class NewPostFragment : Fragment() {
             AndroidUtils.hideKeyboard(requireView())
         }
         viewModel.postCreated.observe(viewLifecycleOwner) {
-            viewModel.loadPosts()
+            viewModel.refreshPosts()
             findNavController().navigateUp()
         }
         return binding.root
