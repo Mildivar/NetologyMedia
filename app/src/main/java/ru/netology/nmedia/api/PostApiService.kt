@@ -2,7 +2,6 @@ package ru.netology.nmedia.api
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Call
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -50,8 +49,8 @@ interface PostApiService {
     suspend fun unlikeById(@Path("id") postId: Long): Response<Post>
 }
 
-object PostApi {
-    val service: PostApiService by lazy {
+object PostsApi {
+    val retrofitService: PostApiService by lazy {
         retrofit.create(PostApiService::class.java)
     }
 }
