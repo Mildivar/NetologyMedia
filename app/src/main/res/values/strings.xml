@@ -20,4 +20,6 @@
     <string name="notification_user_liked">User %1$s liked %2$s\'s post</string>
     <string name="channel_remote_name">Server notifications</string>
     <string name="channel_remote_description">Notifications from remote server</string>
+    <string name="extended_fab_new_post_desc">New posts available.</string>
+    <string name="new_posts">New posts!</string>
 </resources>
