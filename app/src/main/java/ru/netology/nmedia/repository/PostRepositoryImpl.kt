@@ -1,88 +1,89 @@
 package ru.netology.nmedia.repository
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.map
+
+import android.accounts.NetworkErrorException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import retrofit2.HttpException
 import ru.netology.nmedia.api.PostsApi
 import ru.netology.nmedia.dao.PostDao
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.entity.PostEntity
-import java.io.IOException
-import kotlin.Exception
+import ru.netology.nmedia.error.ApiError
+import ru.netology.nmedia.error.AppError
 
 
 class PostRepositoryImpl(
     private val postDao: PostDao
 ) : PostRepository {
-    override val data: LiveData<List<Post>> = postDao.getAll().map {
+    override val data: Flow<List<Post>> = postDao.getAllVisible().map {
         it.map(PostEntity::toDto)
     }
+        .flowOn(Dispatchers.Default)
+
+    override fun getNewerCount(latestId: Long): Flow<Int> = flow {
+        while(true){
+            delay(10_000)
+            try {
+                val postsResponse = PostsApi.retrofitService.getNewer(latestId)
+                if (!postsResponse.isSuccessful) {
+                    throw ApiError(postsResponse.code(),postsResponse.message())
+                }
+                val posts = postsResponse.body().orEmpty()
+                postDao.insert(posts.map(PostEntity::fromDto).map {
+                    it.copy(hidden = true)
+                })
+//                postDao.readAll(latestId)
+                emit(postDao.getUnreadPosts())
+            }
+            catch (e:CancellationException){
+                throw e
+            }
+            catch (e:Exception){
+                e.printStackTrace()
+            }
+        }
+    }
+        .catch { e -> throw AppError.from(e)}
+        .flowOn(Dispatchers.Default)
 
     override suspend fun getAllAsync() {
-        val postsResponse = PostsApi.retrofitService.getAll()
-        if (!postsResponse.isSuccessful) {
-            throw HttpException(postsResponse)
+        try {
+            val postsResponse = PostsApi.retrofitService.getAll()
+            if (!postsResponse.isSuccessful) {
+                throw HttpException(postsResponse)
+            }
+            val posts = postsResponse.body().orEmpty()
+            postDao.insert(posts.map(PostEntity::fromDto))
+        }catch (e:Exception){
+            throw NetworkErrorException()
+        }catch (e:Exception){
+            throw UnknownError()
         }
-        val posts = postsResponse.body().orEmpty()
-        postDao.insert(posts.map(PostEntity::fromDto))
     }
 
     override suspend fun likeById(id: Long): Post {
-//        try {
         val like = PostsApi.retrofitService.likeById(id)
         if (!like.isSuccessful) {
             throw HttpException(like)
         }
         val likes = like.body() ?: throw NullPointerException()
         postDao.likeById(id)
-//
-//        } catch (e:Exception){
-//
-//        }
         return likes
     }
 
     override suspend fun unlikeById(id: Long): Post {
-//        try {
         val like = PostsApi.retrofitService.likeById(id)
         if (!like.isSuccessful) {
             throw HttpException(like)
         }
         val likes = like.body() ?: throw NullPointerException()
         postDao.likeById(id)
-//
-//        } catch (e:Exception){
-//
-//        }
+
         return likes
     }
-
-//override fun unlikeById(id: Long, callback: PostRepository.GetAllCallback<Post>) {
-//
-//    PostsApi.retrofitService.unlikeById(id)
-//        .enqueue(object : retrofit2.Callback<Post> {
-//            override fun onFailure(call: retrofit2.Call<Post>, t: Throwable) {
-//                callback.onError(RuntimeException(t))
-//            }
-//
-//            override fun onResponse(
-//                call: retrofit2.Call<Post>,
-//                response: retrofit2.Response<Post>
-//            ) {
-//                if (!response.isSuccessful) {
-//                    callback.onError(Exception(response.message()))
-//                    return
-//                }
-//                val posts = response.body()
-//                if (posts == null) {
-//                    callback.onError(RuntimeException("Body is null"))
-//                    return
-//                }
-//                callback.onSuccess(posts)
-//            }
-//        }
-//        )
-//}
 
     override suspend fun save(post: Post) {
         try {
@@ -97,15 +98,22 @@ class PostRepositoryImpl(
         }
     }
 
-
-override suspend fun removeById(id: Long) {
-    val remove = PostsApi.retrofitService.deleteById(id)
-    if (!remove.isSuccessful) {
-        throw HttpException(remove)
+    override suspend fun readAllPosts() {
+        try{
+            postDao.readAll()
+        }catch (e:Exception){
+            throw UnknownError(e.message)
+        }
     }
-    val post = remove.body() ?: throw NullPointerException()
-    postDao.removeById(id)
-}
+
+    override suspend fun removeById(id: Long) {
+        val remove = PostsApi.retrofitService.deleteById(id)
+        if (!remove.isSuccessful) {
+            throw HttpException(remove)
+        }
+        remove.body() ?: throw NullPointerException()
+        postDao.removeById(id)
+    }
 
 }
 

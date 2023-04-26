@@ -2,7 +2,9 @@ package ru.netology.nmedia.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
@@ -30,7 +32,13 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val state: LiveData<FeedModelState>
         get() = _state
     val data: LiveData<FeedModel> = repository.data.map(::FeedModel)
+        .asLiveData(Dispatchers.Default)
 
+    //как только что-то меняется - подписка на количество новых постов
+    val newerCount: LiveData<Int> = data.switchMap {
+        val latestPostId = it.posts.firstOrNull()?.id ?: 0L
+        repository.getNewerCount(latestPostId).asLiveData()
+    }
 
     val edited = MutableLiveData(empty)
     private val _postCreated = SingleLiveEvent<Unit>()
@@ -39,6 +47,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadPosts()
+    }
+
+    fun readAllPosts(){
+        scope.launch {
+            try {
+                repository.readAllPosts()
+            }catch (e:Exception){
+                _state.value = FeedModelState(error = true)
+            }
+        }
     }
 
     fun loadPosts() {
@@ -93,11 +111,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         edited.value = edited.value?.copy(content = text)
     }
 
-     fun likeById(id: Long) {
+    fun likeById(id: Long) {
         scope.launch {
             try {
                 _state.value = FeedModelState(loading = true)
-               repository.likeById(id)
+                repository.likeById(id)
             } catch (e: Exception) {
                 _state.value = FeedModelState(error = true)
             }

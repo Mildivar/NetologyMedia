@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
@@ -64,22 +65,42 @@ class FeedFragment : Fragment() {
 
         binding.list.adapter = adapter
         viewModel.state.observe(viewLifecycleOwner) { state ->
-//            adapter.submitList(state.posts)
             binding.progress.isVisible = state.loading
-            if(state.error){
-                Snackbar.make(binding.root,R.string.error_loading,Snackbar.LENGTH_LONG)
-                    .setAction(R.string.retry_loading){viewModel.loadPosts()}
+            if (state.error) {
+                Snackbar.make(binding.root, R.string.error_loading, Snackbar.LENGTH_LONG)
+                    .setAction(R.string.retry_loading) { viewModel.loadPosts() }
                     .show()
             }
-//            binding.errorGroup.isVisible = state.error
-//            binding.emptyText.isVisible = state.empty
             binding.swiperefresh.isRefreshing = state.refreshing
         }
+
+        viewModel.newerCount.observe(viewLifecycleOwner) {
+            binding.newPosts.isVisible = it > 0
+//            println("NewOne:$it")
+        }
+
+        binding.newPosts.setOnClickListener {
+//            updatePost()
+            it.visibility = View.GONE
+            viewModel.readAllPosts()
+        }
+
+        adapter.registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                if (positionStart == 0) {
+                    binding.list.smoothScrollToPosition(0)
+                }
+            }
+        })
 
         viewModel.data.observe(viewLifecycleOwner) { data ->
             adapter.submitList(data.posts)
             binding.emptyText.isVisible = data.empty
         }
+//
+//        binding.newPosts.setOnClickListener {
+//            viewModel.newerCount
+//        }
 
         binding.swiperefresh.setOnRefreshListener {
             viewModel.refreshPosts()
