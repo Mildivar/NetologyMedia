@@ -9,7 +9,7 @@ fun ImageView.load(
     url: String,
     @DrawableRes placeholder: Int = R.drawable.ic_loading_100dp,
     @DrawableRes fallback: Int = R.drawable.ic_error_100dp,
-    timeOutMs: Int = 10000
+    timeOutMs: Int = 10_000
 ) {
     Glide.with(this)
         .load(url)

@@ -87,11 +87,12 @@
             android:id="@+id/attachmentImage"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="visible"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/footer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/content"
+            tools:src="@tools:sample/avatars"
             tools:ignore="ContentDescription" />
 
         <androidx.constraintlayout.widget.Barrier

@@ -61,6 +61,10 @@ class FeedFragment : Fragment() {
                     Intent.createChooser(intent, getString(R.string.chooser_share_post))
                 startActivity(shareIntent)
             }
+
+            override fun onImage(post: Post) {
+                findNavController().navigate(R.id.action_feedFragment_to_mediaFragment)
+            }
         })
 
         binding.list.adapter = adapter
@@ -97,6 +101,12 @@ class FeedFragment : Fragment() {
             adapter.submitList(data.posts)
             binding.emptyText.isVisible = data.empty
         }
+
+//        viewModel.media.observe(viewLifecycleOwner){
+//            if (it == null){
+//                binding.
+//            }
+//        }
 //
 //        binding.newPosts.setOnClickListener {
 //            viewModel.newerCount

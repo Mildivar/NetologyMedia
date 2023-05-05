@@ -1,6 +1,7 @@
 package ru.netology.nmedia.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -10,8 +11,10 @@ import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.model.FeedModelState
+import ru.netology.nmedia.model.MediaModel
 import ru.netology.nmedia.repository.*
 import ru.netology.nmedia.util.SingleLiveEvent
+import java.io.File
 
 private val empty = Post(
     id = 0,
@@ -20,7 +23,7 @@ private val empty = Post(
     authorAvatar = "",
     likedByMe = false,
     likes = 0,
-    published = ""
+    published = "",
 )
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
@@ -40,20 +43,33 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         repository.getNewerCount(latestPostId).asLiveData()
     }
 
-    val edited = MutableLiveData(empty)
+    private val edited = MutableLiveData(empty)
     private val _postCreated = SingleLiveEvent<Unit>()
     val postCreated: LiveData<Unit>
         get() = _postCreated
+
+    private val _media = MutableLiveData<MediaModel?>(null)
+    val media: LiveData<MediaModel?>
+        get() = _media
+
 
     init {
         loadPosts()
     }
 
-    fun readAllPosts(){
+    fun changePhoto(file: File, uri: Uri) {
+        _media.value = MediaModel(uri, file)
+    }
+
+    fun clearPhoto() {
+        _media.value = null
+    }
+
+    fun readAllPosts() {
         scope.launch {
             try {
                 repository.readAllPosts()
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 _state.value = FeedModelState(error = true)
             }
         }
@@ -84,19 +100,22 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun save() {
-        scope.launch {
-            try {
-                _state.value = FeedModelState(loading = true)
-                edited.value?.let {
-                    repository.save(it)
+        edited.value?.let {
+            scope.launch {
+                try {
+                    when (val media = media.value) {
+                        null -> repository.save(it)
+                        else -> repository.saveWithAttachment(it, media)
+                    }
+                    _state.value = FeedModelState(loading = true)
                     _postCreated.value = Unit
+                    edited.value = empty
+                    clearPhoto()
+                } catch (e: Exception) {
+                    _state.value = FeedModelState(error = true)
                 }
-                edited.value = empty
-            } catch (e: Exception) {
-                _state.value = FeedModelState(error = true)
             }
         }
-
     }
 
     fun edit(post: Post) {
