@@ -16,7 +16,7 @@ interface PostDao {
     fun getAllVisible(): Flow<List<PostEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun  insert(post: PostEntity)
+    suspend fun insert(post: PostEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(posts: List<PostEntity>)
@@ -27,12 +27,14 @@ interface PostDao {
     suspend fun save(post: PostEntity) =
         if (post.id == 0L) insert(post) else updateContentById(post.id, post.content)
 
-    @Query("""
+    @Query(
+        """
         UPDATE PostEntity SET
         likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END,
         likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END
         WHERE id = :id
-        """)
+        """
+    )
     suspend fun likeById(id: Long)
 
     @Query("DELETE FROM PostEntity WHERE id = :id")
@@ -42,5 +44,5 @@ interface PostDao {
     suspend fun readAll()
 
     @Query("SELECT COUNT(*) FROM PostEntity WHERE hidden = 1")
-    suspend fun getUnreadPosts():Int
+    suspend fun getUnreadPosts(): Int
 }

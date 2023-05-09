@@ -15,7 +15,7 @@ class MediaFragment : Fragment() {
         var Bundle.textArg by StringArg
     }
 
-    val imageUrl = "http://10.0.2.2:9999/media/${arguments?.textArg}"
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,7 +28,8 @@ class MediaFragment : Fragment() {
             false
         )
 
-        binding.image.loadImage(imageUrl)
+        val imageUrl = "http://10.0.2.2:9999/media/${arguments?.textArg}"
+        binding.imagePreview.loadImage(imageUrl)
 
         return binding.root
     }

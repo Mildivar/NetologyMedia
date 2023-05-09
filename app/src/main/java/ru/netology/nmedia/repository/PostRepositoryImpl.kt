@@ -114,12 +114,12 @@ class PostRepositoryImpl(
         }
     }
 
-    override suspend fun saveWithAttachment(post: Post, mediaModel: MediaModel) {
+    override suspend fun saveWithAttachment(post: Post, media: MediaModel) {
         try {
-            val media = upload(mediaModel)
+            val newMedia = upload(media)
             val save = PostsApi.retrofitService.save(
                 post.copy(
-                    attachment = Attachment(media.id, AttachmentTypes.IMAGE)
+                    attachment = Attachment(newMedia.id, AttachmentTypes.IMAGE)
                 )
             )
             if (!save.isSuccessful) {

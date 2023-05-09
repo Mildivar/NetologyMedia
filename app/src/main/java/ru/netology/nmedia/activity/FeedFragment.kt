@@ -63,7 +63,11 @@ class FeedFragment : Fragment() {
             }
 
             override fun onImage(post: Post) {
-                findNavController().navigate(R.id.action_feedFragment_to_mediaFragment)
+                val url = post.attachment?.url
+                findNavController().navigate(
+                    R.id.action_feedFragment_to_mediaFragment,
+                    Bundle().apply { textArg = url }
+                )
             }
         })
 

@@ -31,9 +31,4 @@
         android:name="ru.netology.nmedia.activity.MediaFragment"
         android:label="@string/media_fragment"
         tools:layout="@layout/fragment_media" />
-    <fragment
-        android:id="@+id/blankFragment"
-        android:name="ru.netology.nmedia.BlankFragment"
-        android:label="fragment_blank"
-        tools:layout="@layout/fragment_blank" />
 </navigation>
