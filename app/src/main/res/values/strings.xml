@@ -22,4 +22,13 @@
     <string name="channel_remote_description">Notifications from remote server</string>
     <string name="extended_fab_new_post_desc">New posts available.</string>
     <string name="new_posts">New posts!</string>
+    <string name="clear">Clear</string>
+    <string name="error">Error</string>
+    <string name="feed_title">Feed</string>
+    <string name="new_feed_title">New Feed</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="media_fragment">Media</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

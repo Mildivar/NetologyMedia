@@ -8,15 +8,6 @@ data class Post(
     val published: String,
     val likedByMe: Boolean,
     val likes: Int = 0,
-    val attachment: AttachmentParams? = null
+    val attachment: Attachment? = null,
 )
 
-data class AttachmentParams(
-    val url: String,
-    val description: String,
-    val type: AttachmentTypes
-)
-
-enum class AttachmentTypes {
-    IMAGE
-}

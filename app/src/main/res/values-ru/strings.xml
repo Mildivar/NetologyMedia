@@ -23,4 +23,9 @@
     <string name="channel_remote_description">Уведомления с удалённого сервера</string>
     <string name="extended_fab_new_post_desc">Доступны новые посты.</string>
     <string name="new_posts">Новый пост!</string>
+    <string name="clear">Clear</string>
+    <string name="error">Error</string>
+    <string name="feed_title">Feed</string>
+    <string name="new_feed_title">New Feed</string>
+    <string name="media_fragment">Media</string>
 </resources>
