@@ -38,6 +38,9 @@ class PostViewHolder(
                 }
                 else attachmentImage.isVisible = false
             }
+
+            menu.isVisible = post.ownedByMe
+
             menu.setOnClickListener {
                 PopupMenu(it.context, it).apply {
                     inflate(R.menu.options_post)
