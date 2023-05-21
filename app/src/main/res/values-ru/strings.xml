@@ -28,4 +28,9 @@
     <string name="feed_title">Feed</string>
     <string name="new_feed_title">New Feed</string>
     <string name="media_fragment">Media</string>
+    <string name="login">Логин</string>
+    <string name="logout">Выйти</string>
+    <string name="register">Зарегистрироваться</string>
+    <string name="password">Пароль</string>
+    <string name="confirm">Подтвердить</string>
 </resources>
