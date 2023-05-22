@@ -13,6 +13,7 @@ import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.error.ApiError
 import ru.netology.nmedia.model.AuthModel
+import ru.netology.nmedia.model.AuthState
 import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
@@ -24,8 +25,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         .asLiveData()
 
     private val scope = MainScope()
-    private val _state = MutableLiveData<FeedModelState>()
+    private val _state = MutableLiveData<AuthState>()
+    val state: LiveData<AuthState>
+        get() = _state
     private val _signInApp = SingleLiveEvent<AuthModel>()
+    val signInApp: LiveData<AuthModel>
+        get() = _signInApp
 
 
     private val repository: PostRepository =
@@ -46,7 +51,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _signInApp.postValue(body)
 //                _stateSignIn.value = SignInModelState()
             }catch (e:Exception){
-                _state.value = FeedModelState(error = true)
+                _state.value = AuthState(wrongAuth = true)
             }
         }
     }

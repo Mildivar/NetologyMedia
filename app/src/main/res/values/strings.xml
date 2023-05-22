@@ -27,7 +27,6 @@
     <string name="feed_title">Feed</string>
     <string name="new_feed_title">New Feed</string>
     <string name="media_fragment">Media</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="register">Register</string>

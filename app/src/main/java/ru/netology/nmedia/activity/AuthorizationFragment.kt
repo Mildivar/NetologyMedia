@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.snackbar.Snackbar
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.databinding.FragmentAuthorizationBinding
 import ru.netology.nmedia.databinding.FragmentMediaBinding
@@ -34,13 +35,19 @@ class AuthorizationFragment : Fragment() {
             authorizationViewModel.authorization(login, password)
 //            AppAuth.init(it.context)
             AndroidUtils.hideKeyboard(requireView())
-            findNavController().navigateUp()
         }
 
+        authorizationViewModel.signInApp.observe(viewLifecycleOwner) {
+            AppAuth.getInstance().setAuth(it.id,it.token)
+            findNavController().navigateUp()
 
+        }
 
-
-
+        authorizationViewModel.state.observe(viewLifecycleOwner) {
+            if (it.wrongAuth) {
+                Snackbar.make(binding.root, "Wrong login or password", Snackbar.LENGTH_LONG).show()
+            }
+        }
         return binding.root
     }
 }
