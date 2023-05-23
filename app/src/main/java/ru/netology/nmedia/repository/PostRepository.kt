@@ -14,4 +14,5 @@ interface PostRepository {
     suspend fun save(post: Post)
     suspend fun readAllPosts()
     suspend fun saveWithAttachment(post: Post, media:MediaModel)
+    suspend fun authorization(login:String,password:String )
 }

@@ -15,8 +15,6 @@ class MediaFragment : Fragment() {
         var Bundle.textArg by StringArg
     }
 
-
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,

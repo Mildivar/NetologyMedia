@@ -10,6 +10,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
 import ru.netology.nmedia.api.PostsApi
+import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dao.PostDao
 import ru.netology.nmedia.dto.Attachment
 import ru.netology.nmedia.dto.AttachmentTypes
@@ -152,6 +153,20 @@ class PostRepositoryImpl(
         }
         remove.body() ?: throw NullPointerException()
         postDao.removeById(id)
+    }
+
+    override suspend fun authorization(login: String, password: String) {
+        try {
+            val response = PostsApi.retrofitService.updateUser(login, password)
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(), response.message())
+            }
+            val field = response.body() ?: throw HttpException(response)
+            AppAuth.getInstance().setAuth(field.id, field.token)
+        } catch (e: IOException) {
+            throw NetworkError
+        }
+
     }
 
 }
