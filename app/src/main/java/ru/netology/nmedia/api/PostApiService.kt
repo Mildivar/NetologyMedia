@@ -11,6 +11,7 @@ import ru.netology.nmedia.BuildConfig
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dto.Media
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.dto.PushToken
 import ru.netology.nmedia.model.AuthModel
 import java.util.concurrent.TimeUnit
 
@@ -70,8 +71,8 @@ interface PostApiService {
     @POST("users/authentication")
     suspend fun updateUser(@Field("login") login: String, @Field("pass") pass: String): Response<AuthModel>
 
-//    @DELETE("posts/{id}/likes")
-//    suspend fun unlikeById(@Path("id") postId: Long): Response<Post>
+    @POST("users/push-tokens")
+    suspend fun sendPushToken(@Body token:PushToken)
 }
 
 object PostsApi {
