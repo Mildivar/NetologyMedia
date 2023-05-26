@@ -3,6 +3,7 @@ HELP.md
 .gradle
 build/
 google-services.json
+fcm.json
 
 
 ### STS ###
