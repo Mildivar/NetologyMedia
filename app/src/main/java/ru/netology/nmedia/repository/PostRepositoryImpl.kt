@@ -9,9 +9,10 @@ import kotlinx.coroutines.flow.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.HttpException
-import ru.netology.nmedia.api.PostsApi
+import ru.netology.nmedia.api.ApiService
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dao.PostDao
+import ru.netology.nmedia.di.DependencyContainer
 import ru.netology.nmedia.dto.Attachment
 import ru.netology.nmedia.dto.AttachmentTypes
 import ru.netology.nmedia.dto.Media
@@ -25,7 +26,8 @@ import java.io.IOException
 
 
 class PostRepositoryImpl(
-    private val postDao: PostDao
+    private val postDao: PostDao,
+    private val apiService: ApiService
 ) : PostRepository {
     override val data: Flow<List<Post>> = postDao.getAllVisible().map {
         it.map(PostEntity::toDto)
@@ -36,7 +38,7 @@ class PostRepositoryImpl(
         while (true) {
             delay(10_000)
             try {
-                val postsResponse = PostsApi.retrofitService.getNewer(latestId)
+                val postsResponse = apiService.getNewer(latestId)
                 if (!postsResponse.isSuccessful) {
                     throw ApiError(postsResponse.code(), postsResponse.message())
                 }
@@ -58,7 +60,7 @@ class PostRepositoryImpl(
 
     override suspend fun getAllAsync() {
         try {
-            val postsResponse = PostsApi.retrofitService.getAll()
+            val postsResponse = apiService.getAll()
             if (!postsResponse.isSuccessful) {
                 throw HttpException(postsResponse)
             }
@@ -72,7 +74,7 @@ class PostRepositoryImpl(
     }
 
     override suspend fun likeById(id: Long): Post {
-        val like = PostsApi.retrofitService.likeById(id)
+        val like = apiService.likeById(id)
         if (!like.isSuccessful) {
             throw HttpException(like)
         }
@@ -82,7 +84,7 @@ class PostRepositoryImpl(
     }
 
     override suspend fun unlikeById(id: Long): Post {
-        val like = PostsApi.retrofitService.likeById(id)
+        val like = apiService.likeById(id)
         if (!like.isSuccessful) {
             throw HttpException(like)
         }
@@ -94,7 +96,7 @@ class PostRepositoryImpl(
 
     override suspend fun save(post: Post) {
         try {
-            val save = PostsApi.retrofitService.save(post)
+            val save = apiService.save(post)
             if (!save.isSuccessful) {
                 throw ApiError(save.code(), save.message())
             }
@@ -118,7 +120,7 @@ class PostRepositoryImpl(
     override suspend fun saveWithAttachment(post: Post, media: MediaModel) {
         try {
             val newMedia = upload(media)
-            val save = PostsApi.retrofitService.save(
+            val save = apiService.save(
                 post.copy(
                     attachment = Attachment(newMedia.id, AttachmentTypes.IMAGE)
                 )
@@ -139,7 +141,7 @@ class PostRepositoryImpl(
         val part = MultipartBody.Part.createFormData(
             "file", media.file.name, media.file.asRequestBody()
         )
-        val response = PostsApi.retrofitService.uploadMedia(part)
+        val response = apiService.uploadMedia(part)
         if (!response.isSuccessful) {
             throw ApiError(response.code(), response.message())
         }
@@ -147,7 +149,7 @@ class PostRepositoryImpl(
     }
 
     override suspend fun removeById(id: Long) {
-        val remove = PostsApi.retrofitService.deleteById(id)
+        val remove = apiService.deleteById(id)
         if (!remove.isSuccessful) {
             throw HttpException(remove)
         }
@@ -157,12 +159,12 @@ class PostRepositoryImpl(
 
     override suspend fun authorization(login: String, password: String) {
         try {
-            val response = PostsApi.retrofitService.updateUser(login, password)
+            val response = apiService.updateUser(login, password)
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
             }
             val field = response.body() ?: throw HttpException(response)
-            AppAuth.getInstance().setAuth(field.id, field.token)
+            DependencyContainer.getInstance().appAuth.setAuth(field.id, field.token)
         } catch (e: IOException) {
             throw NetworkError
         }

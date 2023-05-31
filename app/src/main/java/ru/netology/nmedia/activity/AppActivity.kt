@@ -19,11 +19,18 @@ import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.messaging.FirebaseMessaging
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
-import ru.netology.nmedia.auth.AppAuth
+import ru.netology.nmedia.di.DependencyContainer
 import ru.netology.nmedia.viewmodel.AuthViewModel
+import ru.netology.nmedia.viewmodel.ViewModelFactory
+
 
 class AppActivity : AppCompatActivity(R.layout.activity_app) {
-
+    private val dependencyContainer = DependencyContainer.getInstance()
+    val viewModel by viewModels<AuthViewModel>(
+        factoryProducer = {
+            ViewModelFactory(dependencyContainer.repository, dependencyContainer.appAuth)
+        }
+    )
     lateinit var appBarConfiguration: AppBarConfiguration
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,17 +62,15 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        val authViewModel by viewModels<AuthViewModel>()
-
         var previousMenuProvider: MenuProvider? = null
-        authViewModel.data.observe(this) {
+        viewModel.data.observe(this) {
             previousMenuProvider?.let(::removeMenuProvider)
             addMenuProvider(object : MenuProvider {
                 override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                     menuInflater.inflate(R.menu.menu_auth, menu)
 
-                    menu.setGroupVisible(R.id.unauthorized, !authViewModel.authorized)
-                    menu.setGroupVisible(R.id.authorized, authViewModel.authorized)
+                    menu.setGroupVisible(R.id.unauthorized, !viewModel.authorized)
+                    menu.setGroupVisible(R.id.authorized, viewModel.authorized)
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
@@ -77,14 +82,15 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                         }
 
                         R.id.logout -> {
-                            AppAuth.getInstance().removeAuth()
+                            dependencyContainer.appAuth.removeAuth()
                             true
                         }
+
                         else -> false
                     }
             }.also {
-                    previousMenuProvider = it
-                })
+                previousMenuProvider = it
+            })
         }
 
         checkGoogleApiAvailability()

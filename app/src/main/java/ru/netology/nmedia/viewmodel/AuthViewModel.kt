@@ -1,26 +1,23 @@
 package ru.netology.nmedia.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import ru.netology.nmedia.api.PostsApi
 import ru.netology.nmedia.auth.AppAuth
-import ru.netology.nmedia.db.AppDb
+import ru.netology.nmedia.di.DependencyContainer
 import ru.netology.nmedia.error.ApiError
 import ru.netology.nmedia.model.AuthModel
 import ru.netology.nmedia.model.AuthState
-import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.repository.PostRepository
-import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    val data: LiveData<AuthModel?> = AppAuth.getInstance()
+class AuthViewModel(
+    private val appAuth: AppAuth
+) : ViewModel() {
+    val data: LiveData<AuthModel?> = appAuth
         .data
         .asLiveData()
 
@@ -34,7 +31,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
 
     private val repository: PostRepository =
-        PostRepositoryImpl(AppDb.getInstance(application).postDao())
+        DependencyContainer.getInstance().repository
+//        PostRepositoryImpl(AppDb.getInstance(application).postDao())
 
     val authorized: Boolean
         get() = data.value != null
@@ -43,7 +41,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         scope.launch {
             try{
                 repository.authorization(login, password)
-                val postsResponse = PostsApi.retrofitService.updateUser(login, password)
+                val postsResponse = DependencyContainer.getInstance().apiService.updateUser(login, password)
                 val body = postsResponse.body() ?: throw ApiError(
                     postsResponse.code(),
                     postsResponse.message()

@@ -1,16 +1,14 @@
 package ru.netology.nmedia.viewmodel
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.auth.AppAuth
-import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.model.FeedModelState
@@ -30,16 +28,17 @@ private val empty = Post(
     published = "",
 )
 
-class PostViewModel(application: Application) : AndroidViewModel(application) {
-    //упрощённый вариант
-    private val repository: PostRepository =
-        PostRepositoryImpl(AppDb.getInstance(application).postDao())
+class PostViewModel(
+    private val repository:PostRepository,
+    appAuth: AppAuth
+) : ViewModel() {
+
     private val scope = MainScope()
     private val _state = MutableLiveData(FeedModelState())
     val state: LiveData<FeedModelState>
         get() = _state
     @OptIn(ExperimentalCoroutinesApi::class)
-    val data: LiveData<FeedModel> = AppAuth.getInstance().data.flatMapLatest { authState ->
+    val data: LiveData<FeedModel> = appAuth.data.flatMapLatest { authState ->
         repository.data
             .map {posts ->
                 FeedModel(posts.map {

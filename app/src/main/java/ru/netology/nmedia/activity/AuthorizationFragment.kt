@@ -8,10 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.snackbar.Snackbar
-import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.databinding.FragmentAuthorizationBinding
-import ru.netology.nmedia.databinding.FragmentMediaBinding
-import ru.netology.nmedia.model.AuthModel
+import ru.netology.nmedia.di.DependencyContainer
 import ru.netology.nmedia.util.AndroidUtils
 import ru.netology.nmedia.viewmodel.AuthViewModel
 
@@ -38,7 +36,7 @@ class AuthorizationFragment : Fragment() {
         }
 
         authorizationViewModel.signInApp.observe(viewLifecycleOwner) {
-            AppAuth.getInstance().setAuth(it.id,it.token)
+            DependencyContainer.getInstance().appAuth.setAuth(it.id,it.token)
             findNavController().navigateUp()
 
         }
