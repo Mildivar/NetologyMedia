@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 33
@@ -37,6 +38,7 @@ android {
         }
         debug {
             manifestPlaceholders.usesCleartextTraffic = true
+            buildConfigField "String", "BASE_URL", '"http://10.0.2.2:9999"'
         }
     }
     namespace 'ru.netology.nmedia'
@@ -67,6 +69,7 @@ dependencies {
     def okhttplogging_version = "4.10.0"
     def coroutines_version = "1.6.4"
     def imagepicker_version = "2.1"
+    def hilt_version = "2.45"
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "androidx.core:core-ktx:$core_version"
@@ -97,6 +100,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
     implementation "com.github.dhaval2404:imagepicker:$imagepicker_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:$coroutines_version"
+    implementation "com.google.dagger:hilt-android:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:$hilt_version"
 
 
     testImplementation "junit:junit:$junit_version"

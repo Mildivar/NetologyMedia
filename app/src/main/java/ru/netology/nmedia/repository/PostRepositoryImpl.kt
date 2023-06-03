@@ -12,7 +12,6 @@ import retrofit2.HttpException
 import ru.netology.nmedia.api.ApiService
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dao.PostDao
-import ru.netology.nmedia.di.DependencyContainer
 import ru.netology.nmedia.dto.Attachment
 import ru.netology.nmedia.dto.AttachmentTypes
 import ru.netology.nmedia.dto.Media
@@ -23,11 +22,14 @@ import ru.netology.nmedia.error.AppError
 import ru.netology.nmedia.error.NetworkError
 import ru.netology.nmedia.model.MediaModel
 import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 
-
-class PostRepositoryImpl(
+@Singleton
+class PostRepositoryImpl @Inject constructor(
     private val postDao: PostDao,
-    private val apiService: ApiService
+    private val apiService: ApiService,
+    private val appAuth: AppAuth
 ) : PostRepository {
     override val data: Flow<List<Post>> = postDao.getAllVisible().map {
         it.map(PostEntity::toDto)
@@ -164,7 +166,7 @@ class PostRepositoryImpl(
                 throw ApiError(response.code(), response.message())
             }
             val field = response.body() ?: throw HttpException(response)
-            DependencyContainer.getInstance().appAuth.setAuth(field.id, field.token)
+            appAuth.setAuth(field.id, field.token)
         } catch (e: IOException) {
             throw NetworkError
         }

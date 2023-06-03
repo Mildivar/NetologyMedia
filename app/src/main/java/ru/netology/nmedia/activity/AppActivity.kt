@@ -17,21 +17,25 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
-import ru.netology.nmedia.di.DependencyContainer
+import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.viewmodel.AuthViewModel
-import ru.netology.nmedia.viewmodel.ViewModelFactory
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class AppActivity : AppCompatActivity(R.layout.activity_app) {
-    private val dependencyContainer = DependencyContainer.getInstance()
-    val viewModel by viewModels<AuthViewModel>(
-        factoryProducer = {
-            ViewModelFactory(dependencyContainer.repository, dependencyContainer.appAuth)
-        }
-    )
+
+    @Inject
+    lateinit var appAuth:AppAuth
+    @Inject
+    lateinit var firebaseMessaging: FirebaseMessaging
+    @Inject
+    lateinit var checkGoogleApiAvailability: GoogleApiAvailability
+
     lateinit var appBarConfiguration: AppBarConfiguration
+    val viewModel:AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,7 +86,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                         }
 
                         R.id.logout -> {
-                            dependencyContainer.appAuth.removeAuth()
+                            appAuth.removeAuth()
                             true
                         }
 
@@ -97,7 +101,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
     }
 
     private fun checkGoogleApiAvailability() {
-        with(GoogleApiAvailability.getInstance()) {
+        with(checkGoogleApiAvailability) {
             val code = isGooglePlayServicesAvailable(this@AppActivity)
             if (code == ConnectionResult.SUCCESS) {
                 return@with
@@ -110,7 +114,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                 .show()
         }
 
-        FirebaseMessaging.getInstance().token.addOnSuccessListener {
+        firebaseMessaging.token.addOnSuccessListener {
             println(it)
         }
     }
