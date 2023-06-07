@@ -1,26 +1,30 @@
 package ru.netology.nmedia.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import ru.netology.nmedia.api.PostsApi
+import ru.netology.nmedia.api.ApiService
 import ru.netology.nmedia.auth.AppAuth
-import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.error.ApiError
 import ru.netology.nmedia.model.AuthModel
 import ru.netology.nmedia.model.AuthState
-import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
+import java.io.IOException
+import javax.inject.Inject
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    val data: LiveData<AuthModel?> = AppAuth.getInstance()
+@HiltViewModel
+class AuthViewModel @Inject constructor(
+    appAuth: AppAuth,
+    repository: PostRepositoryImpl,
+    private val apiService: ApiService
+) : ViewModel() {
+    val data: LiveData<AuthModel?> = appAuth
         .data
         .asLiveData()
 
@@ -32,26 +36,28 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val signInApp: LiveData<AuthModel>
         get() = _signInApp
 
-
     private val repository: PostRepository =
-        PostRepositoryImpl(AppDb.getInstance(application).postDao())
+        repository
+//        PostRepositoryImpl(AppDb.getInstance(application).postDao())
 
     val authorized: Boolean
         get() = data.value != null
 
     fun authorization(login: String, password: String) {
         scope.launch {
-            try{
+            try {
                 repository.authorization(login, password)
-                val postsResponse = PostsApi.retrofitService.updateUser(login, password)
+                val postsResponse = apiService.updateUser(login, password)
                 val body = postsResponse.body() ?: throw ApiError(
                     postsResponse.code(),
                     postsResponse.message()
                 )
                 _signInApp.postValue(body)
-//                _stateSignIn.value = SignInModelState()
-            }catch (e:Exception){
+//                _state.value = AuthState()
+            } catch (e: Exception) {
                 _state.value = AuthState(wrongAuth = true)
+                println(e.message)
+
             }
         }
     }

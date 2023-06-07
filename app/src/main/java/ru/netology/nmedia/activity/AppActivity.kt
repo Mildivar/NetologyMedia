@@ -17,14 +17,25 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.firebase.messaging.FirebaseMessaging
+import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.viewmodel.AuthViewModel
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class AppActivity : AppCompatActivity(R.layout.activity_app) {
 
+    @Inject
+    lateinit var appAuth:AppAuth
+    @Inject
+    lateinit var firebaseMessaging: FirebaseMessaging
+    @Inject
+    lateinit var checkGoogleApiAvailability: GoogleApiAvailability
+
     lateinit var appBarConfiguration: AppBarConfiguration
+    val viewModel:AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,17 +66,15 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        val authViewModel by viewModels<AuthViewModel>()
-
         var previousMenuProvider: MenuProvider? = null
-        authViewModel.data.observe(this) {
+        viewModel.data.observe(this) {
             previousMenuProvider?.let(::removeMenuProvider)
             addMenuProvider(object : MenuProvider {
                 override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                     menuInflater.inflate(R.menu.menu_auth, menu)
 
-                    menu.setGroupVisible(R.id.unauthorized, !authViewModel.authorized)
-                    menu.setGroupVisible(R.id.authorized, authViewModel.authorized)
+                    menu.setGroupVisible(R.id.unauthorized, !viewModel.authorized)
+                    menu.setGroupVisible(R.id.authorized, viewModel.authorized)
                 }
 
                 override fun onMenuItemSelected(menuItem: MenuItem): Boolean =
@@ -77,21 +86,22 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                         }
 
                         R.id.logout -> {
-                            AppAuth.getInstance().removeAuth()
+                            appAuth.removeAuth()
                             true
                         }
+
                         else -> false
                     }
             }.also {
-                    previousMenuProvider = it
-                })
+                previousMenuProvider = it
+            })
         }
 
         checkGoogleApiAvailability()
     }
 
     private fun checkGoogleApiAvailability() {
-        with(GoogleApiAvailability.getInstance()) {
+        with(checkGoogleApiAvailability) {
             val code = isGooglePlayServicesAvailable(this@AppActivity)
             if (code == ConnectionResult.SUCCESS) {
                 return@with
@@ -104,7 +114,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                 .show()
         }
 
-        FirebaseMessaging.getInstance().token.addOnSuccessListener {
+        firebaseMessaging.token.addOnSuccessListener {
             println(it)
         }
     }
