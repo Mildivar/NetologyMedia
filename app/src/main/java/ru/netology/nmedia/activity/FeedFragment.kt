@@ -9,10 +9,13 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
 import ru.netology.nmedia.adapter.OnInteractionListener
@@ -103,10 +106,16 @@ class FeedFragment : Fragment() {
             }
         })
 
-        viewModel.data.observe(viewLifecycleOwner) { data ->
-            adapter.submitList(data.posts)
-            binding.emptyText.isVisible = data.empty
+        lifecycleScope.launchWhenCreated {
+            viewModel.data.collectLatest {
+                adapter.submitData(it)
+            }
         }
+//
+//        viewModel.data.observe(viewLifecycleOwner) { data ->
+//            adapter.submitList(data.posts)
+//            binding.emptyText.isVisible = data.empty
+//        }
 
 //        viewModel.media.observe(viewLifecycleOwner){
 //            if (it == null){

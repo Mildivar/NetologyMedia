@@ -2,16 +2,19 @@ package ru.netology.nmedia.viewmodel
 
 import android.net.Uri
 import androidx.lifecycle.*
+import androidx.paging.PagingData
+import androidx.paging.map
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.model.MediaModel
 import ru.netology.nmedia.repository.*
@@ -41,14 +44,14 @@ class PostViewModel @Inject constructor(
     val state: LiveData<FeedModelState>
         get() = _state
     @OptIn(ExperimentalCoroutinesApi::class)
-    val data: LiveData<FeedModel> = appAuth.data.flatMapLatest { authState ->
+    val data: Flow<PagingData<Post>> = appAuth.data.flatMapLatest { authState ->
         repository.data
             .map {posts ->
-                FeedModel(posts.map {
+                posts.map {
                     it.copy(ownedByMe = authState?.id == it.authorId)
-                },posts.isEmpty())
+                }
             }
-    }.asLiveData(Dispatchers.Default)
+    }.flowOn(Dispatchers.Default)
 
     //как только что-то меняется - подписка на количество новых постов
     val newerCount: LiveData<Int> = data.switchMap {
