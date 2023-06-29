@@ -36,9 +36,7 @@ class PostRepositoryImpl @Inject constructor(
     override val data = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
         pagingSourceFactory = {
-            PostPagingSource(
-                apiService
-            )
+            PostPagingSource(apiService)
         }
     ).flow
     override fun getNewerCount(latestId: Long): Flow<Int> = flow {

@@ -9,9 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.switchMap
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.dto.Post
@@ -54,8 +57,8 @@ class PostViewModel @Inject constructor(
     }.flowOn(Dispatchers.Default)
 
     //как только что-то меняется - подписка на количество новых постов
-    val newerCount: LiveData<Int> = data.switchMap {
-        val latestPostId = it.posts.firstOrNull()?.id ?: 0L
+    val newerCount: Flow<LiveData<Int>> = data.mapLatest {
+        val latestPostId = appAuth.data.firstOrNull()?.id ?: 0L
         repository.getNewerCount(latestPostId).asLiveData()
     }
 

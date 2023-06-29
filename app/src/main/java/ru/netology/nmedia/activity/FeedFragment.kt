@@ -11,6 +11,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
@@ -87,10 +88,10 @@ class FeedFragment : Fragment() {
             binding.swiperefresh.isRefreshing = state.refreshing
         }
 
-        viewModel.newerCount.observe(viewLifecycleOwner) {
-            binding.newPosts.isVisible = it > 0
-//            println("NewOne:$it")
-        }
+//        viewModel.newerCount.observe(viewLifecycleOwner) {
+//            binding.newPosts.isVisible = it > 0
+////            println("NewOne:$it")
+//        }
 
         binding.newPosts.setOnClickListener {
 //            updatePost()
@@ -108,9 +109,20 @@ class FeedFragment : Fragment() {
 
         lifecycleScope.launchWhenCreated {
             viewModel.data.collectLatest {
+//                binding.newPosts.isVisible
                 adapter.submitData(it)
             }
         }
+
+        lifecycleScope.launchWhenCreated {
+            adapter.loadStateFlow.collectLatest {
+                binding.swiperefresh.isRefreshing = it.refresh is LoadState.Loading ||
+                        it.append is LoadState.Loading ||
+                        it.prepend is LoadState.Loading
+            }
+        }
+
+
 //
 //        viewModel.data.observe(viewLifecycleOwner) { data ->
 //            adapter.submitList(data.posts)
@@ -123,12 +135,13 @@ class FeedFragment : Fragment() {
 //            }
 //        }
 //
-//        binding.newPosts.setOnClickListener {
-//            viewModel.newerCount
-//        }
+        binding.newPosts.setOnClickListener {
+            viewModel.newerCount
+        }
 
         binding.swiperefresh.setOnRefreshListener {
-            viewModel.refreshPosts()
+            adapter.refresh()
+//            viewModel.refreshPosts()
         }
 
         binding.retryButton.setOnClickListener {
