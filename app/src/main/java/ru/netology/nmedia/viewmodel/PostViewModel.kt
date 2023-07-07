@@ -98,7 +98,7 @@ class PostViewModel @Inject constructor(
         scope.launch {
             try {
                 _state.value = (FeedModelState(loading = true))
-                repository.getAllAsync()
+//                repository.getAllAsync()
                 _state.value = FeedModelState()
             } catch (e: Exception) {
                 _state.value = FeedModelState(error = true)
@@ -110,7 +110,7 @@ class PostViewModel @Inject constructor(
         scope.launch {
             try {
                 _state.value = (FeedModelState(refreshing = true))
-                repository.getAllAsync()
+//                repository.getAllAsync()
                 _state.value = FeedModelState()
             } catch (e: Exception) {
                 _state.value = FeedModelState(error = true)

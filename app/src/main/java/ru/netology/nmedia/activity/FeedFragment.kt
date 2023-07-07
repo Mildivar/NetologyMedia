@@ -123,6 +123,11 @@ class FeedFragment : Fragment() {
         }
 
 
+        lifecycleScope.launchWhenStarted {
+            viewModel.data.collectLatest {
+                adapter.submitData(it)
+            }
+        }
 //
 //        viewModel.data.observe(viewLifecycleOwner) { data ->
 //            adapter.submitList(data.posts)
