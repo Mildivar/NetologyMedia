@@ -7,7 +7,7 @@ import ru.netology.nmedia.api.ApiService
 import ru.netology.nmedia.dto.Post
 import java.io.IOException
 
-class PostPagingSource(
+class PostRemoteMediator(
     private val apiService:ApiService
 ) :PagingSource<Long, Post>() {
 
