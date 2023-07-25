@@ -1,44 +1,51 @@
 package ru.netology.nmedia.repository
 
-import androidx.paging.PagingSource
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.LoadType
 import androidx.paging.PagingState
-import retrofit2.HttpException
+import androidx.paging.RemoteMediator
 import ru.netology.nmedia.api.ApiService
+import ru.netology.nmedia.dao.PostDao
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.entity.PostEntity
+import ru.netology.nmedia.error.ApiError
 import java.io.IOException
 
+@OptIn(ExperimentalPagingApi::class)
 class PostRemoteMediator(
-    private val apiService:ApiService
-) :PagingSource<Long, Post>() {
+    private val apiService:ApiService,
+    private val postDao: PostDao
+) :RemoteMediator<Int, PostEntity>() {
 
-    override fun getRefreshKey(state: PagingState<Long, Post>): Long? = null
+//    override fun getRefreshKey(state: PagingState<Long, Post>): Long? = null
 
-    override suspend fun load(params: LoadParams<Long>): LoadResult<Long, Post> {
+    override suspend fun load(loadType: LoadType, state: PagingState<Int, PostEntity>): MediatorResult {
         try {
-            val result = when (params) {
-                is LoadParams.Refresh -> {
-                    apiService.getLatest(params.loadSize)
+            val response = when (loadType) {
+                LoadType.REFRESH -> {
+                    apiService.getLatest(state.config.pageSize)
                 }
 
-                is LoadParams.Append -> {
-                    apiService.getBefore(postId = params.key, count = params.loadSize)
+                LoadType.APPEND -> {
+                    val id = state.lastItemOrNull()?.id ?: return MediatorResult.Success(false)
+                    apiService.getBefore(id, state.config.pageSize)
                 }
 
-                is LoadParams.Prepend -> return LoadResult.Page(
-                    data = emptyList(), nextKey = null, prevKey = params.key
-                )
+                LoadType.PREPEND -> {
+                    val id = state.firstItemOrNull()?.id ?: return MediatorResult.Success(false)
+                    apiService.getAfter(id, state.config.pageSize)
+                }
             }
-            if (!result.isSuccessful) {
-                throw HttpException(result)
+            if (!response.isSuccessful) {
+                throw ApiError(response.code(),response.message())
             }
-            val data = result.body().orEmpty()
-            return LoadResult.Page(
-                data,
-                prevKey = params.key,
-                nextKey = data.lastOrNull()?.id
-            )
+            val body = response.body() ?: throw ApiError(response.code(),response.message())
+
+            postDao.insert(body.map(PostEntity::fromDto))
+
+            return MediatorResult.Success(body.isEmpty())
         }catch (e: IOException){
-            return LoadResult.Error(e)
+            return MediatorResult.Error(e)
         }
     }
 }
