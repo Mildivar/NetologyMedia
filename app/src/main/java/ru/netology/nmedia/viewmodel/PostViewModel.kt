@@ -57,6 +57,7 @@ class PostViewModel @Inject constructor(
     }.flowOn(Dispatchers.Default)
 
     //как только что-то меняется - подписка на количество новых постов
+    @OptIn(ExperimentalCoroutinesApi::class)
     val newerCount: Flow<LiveData<Int>> = data.mapLatest {
         val latestPostId = appAuth.data.firstOrNull()?.id ?: 0L
         repository.getNewerCount(latestPostId).asLiveData()
@@ -72,9 +73,9 @@ class PostViewModel @Inject constructor(
         get() = _media
 
 
-    init {
-        loadPosts()
-    }
+//    init {
+//        loadPosts()
+//    }
 
     fun changePhoto(file: File, uri: Uri) {
         _media.value = MediaModel(uri, file)
