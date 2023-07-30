@@ -31,73 +31,84 @@ class PostRemoteMediator(
         try {
             val response = when (loadType) {
                 LoadType.REFRESH -> {
-                    if (postDao.isEmpty()) {
-                        val id = postRemoteKeyDao.max() ?: return MediatorResult.Success(false)
-                        apiService.getAfter(id, state.config.pageSize)
-                    }else{
-                        apiService.getLatest(state.config.initialLoadSize)
+                        val id = postRemoteKeyDao.max()
+                        if (id != null) {
+                            apiService.getAfter(id, state.config.pageSize)
+                        } else {
+                            apiService.getLatest(state.config.initialLoadSize)
+                        }
+                    }
+
+                    LoadType.APPEND -> {
+                        val id = postRemoteKeyDao.min() ?: return MediatorResult.Success(false)
+                        apiService.getBefore(id, state.config.pageSize)
+                    }
+
+                    LoadType.PREPEND -> {
+//                    val id = postRemoteKeyDao.max() ?:
+                        return MediatorResult.Success(true)
+//                    apiService.getAfter(id, state.config.pageSize)
                     }
                 }
-                LoadType.APPEND -> {
-                    val id = postRemoteKeyDao.min() ?: return MediatorResult.Success(false)
-                    apiService.getBefore(id, state.config.pageSize)
-                }
 
-                LoadType.PREPEND -> {
-//                    val id = postRemoteKeyDao.max() ?:
-                    return MediatorResult.Success(true)
-//                    apiService.getAfter(id, state.config.pageSize)
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
                 }
-            }
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
-            }
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
+                    val body =
+                    response.body() ?: throw ApiError(response.code(), response.message())
 
-            appDb.withTransaction {
-                when (loadType) {
-                    LoadType.REFRESH -> {
-                        postDao.clear()
-                        postRemoteKeyDao.insert(
-                            listOf(
-                                PostRemoteKeyEntity(
-                                    type = PostRemoteKeyEntity.KeyType.AFTER,
-                                    key = body.first().id,
-                                ),
+                appDb.withTransaction {
+                    when (loadType) {
+                        LoadType.REFRESH -> {
+                            if (postDao.isEmpty()) {
+                                postRemoteKeyDao.insert(
+                                    listOf(
+                                        PostRemoteKeyEntity(
+                                            type = PostRemoteKeyEntity.KeyType.AFTER,
+                                            key = body.first().id,
+                                        ),
+                                        PostRemoteKeyEntity(
+                                            type = PostRemoteKeyEntity.KeyType.BEFORE,
+                                            key = body.last().id,
+                                        )
+                                    )
+                                )
+                            } else {
+                                postRemoteKeyDao.insert(
+                                        PostRemoteKeyEntity(
+                                            type = PostRemoteKeyEntity.KeyType.AFTER,
+                                            key = body.first().id,
+                                        )
+                                )
+                            }
+//                            postDao.clear()
+                        }
+
+                        LoadType.APPEND -> {
+                            postRemoteKeyDao.insert(
                                 PostRemoteKeyEntity(
                                     type = PostRemoteKeyEntity.KeyType.BEFORE,
                                     key = body.last().id,
                                 )
                             )
-                        )
-                        postDao.clear()
-                    }
+                        }
 
-                    LoadType.APPEND -> {
-                        postRemoteKeyDao.insert(
-                            PostRemoteKeyEntity(
-                                type = PostRemoteKeyEntity.KeyType.BEFORE,
-                                key = body.last().id,
-                            )
-                        )
-                    }
-
-                    LoadType.PREPEND -> {
+                        LoadType.PREPEND -> {
 //                        postRemoteKeyDao.insert(
 //                            PostRemoteKeyEntity(
 //                                type = PostRemoteKeyEntity.KeyType.AFTER,
 //                                key = body.first().id,
 //                            )
 //                        )
+                        }
                     }
+
+                    postDao.insert(body.map(PostEntity::fromDto))
                 }
 
-                postDao.insert(body.map(PostEntity::fromDto))
+                    return MediatorResult.Success(body.isEmpty())
+            } catch (e: IOException) {
+                return MediatorResult.Error(e)
             }
-
-            return MediatorResult.Success(body.isEmpty())
-        } catch (e: IOException) {
-            return MediatorResult.Error(e)
         }
     }
-}
